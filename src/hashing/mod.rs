@@ -8,7 +8,7 @@ pub mod types;
 pub use types::{FileSnapshot, DirectorySnapshot, IntegrityDB};
 
 use std::fs;
-use std::path::Path;
+
 
 pub fn snapshot_file(path: &str) -> anyhow::Result<FileSnapshot> {
     let metadata = fs::metadata(path)?;
@@ -60,11 +60,11 @@ mod tests {
         assert_eq!(snapshot.sha256.len(), 64);  // SHA-256 = 64 hex chars
         assert_eq!(snapshot.blake3.len(), 64);  // BLAKE3 = 64 hex chars
 
-        println!("✅ path:     {}", snapshot.path);
-        println!("✅ size:     {}", snapshot.size);
-        println!("✅ sha256:   {}", snapshot.sha256);
-        println!("✅ blake3:   {}", snapshot.blake3);
-        println!("✅ modified: {}", snapshot.modified_at);
+        println!("[OK] path:     {}", snapshot.path);
+        println!("[OK] size:     {}", snapshot.size);
+        println!("[OK] sha256:   {}", snapshot.sha256);
+        println!("[OK] blake3:   {}", snapshot.blake3);
+        println!("[OK] modified: {}", snapshot.modified_at);
 
         std::fs::remove_file(path).unwrap();
     }
