@@ -3,10 +3,11 @@
 // Gérer les erreurs de permission sans planter
 
 use crate::hashing::DirectorySnapshot;
+use crate::scanner::metadata;
+use crate::scanner::symlink;
+use std::collections::{HashMap, HashSet};
+use std::fs;
 
- Updated upstream
-pub fn scan(_root: &str) -> anyhow::Result<DirectorySnapshot> {
-    todo!("Implémenter le scan parallèle avec rayon")
 pub fn scan(root: &str) -> anyhow::Result<DirectorySnapshot> {
     let mut files = HashMap::new();
     let mut visited = HashSet::new();
@@ -14,7 +15,10 @@ pub fn scan(root: &str) -> anyhow::Result<DirectorySnapshot> {
     Ok(DirectorySnapshot {
         root: root.to_string(),
         files,
-        created_at: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs() as i64,
+        created_at: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64,
     })
 }
 
@@ -31,12 +35,16 @@ fn scan_dir(
         let path = entry.path();
         let path_str = path.to_string_lossy().to_string();
         if path.is_symlink() {
-            if symlink::is_symlink_loop(&path_str, visited) { continue; }
+            if symlink::is_symlink_loop(&path_str, visited) {
+                continue;
+            }
             symlink::register_inode(&path_str, visited);
         }
         if path.is_file() {
             match metadata::collect(&path_str) {
-                Ok(snap) => { files.insert(path_str, snap); }
+                Ok(snap) => {
+                    files.insert(path_str, snap);
+                }
                 Err(_) => {} // fichier illisible → on ignore
             }
         } else if path.is_dir() {
@@ -58,6 +66,4 @@ mod tests {
         let snap = scan(dir.path().to_str().unwrap()).unwrap();
         assert_eq!(snap.files.len(), 2);
     }
-Stashed changes
 }
-
