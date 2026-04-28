@@ -1,4 +1,3 @@
-// Partie 1 — Types de données principaux
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -26,4 +25,39 @@ pub struct IntegrityDB {
     pub version: String,
 }
 
-// TODO: implémenter les méthodes nécessaires
+impl FileSnapshot {
+    pub fn new(
+        path: String,
+        size: u64,
+        sha256: String,
+        blake3: String,
+        permissions: u32,
+        owner: u32,
+        modified_at: i64,
+    ) -> Self {
+        Self { path, size, sha256, blake3, permissions, owner, modified_at }
+    }
+}
+
+impl DirectorySnapshot {
+    pub fn new(root: String) -> Self {
+        Self {
+            root,
+            files: HashMap::new(),
+            created_at: chrono::Utc::now().timestamp(),
+        }
+    }
+
+    pub fn add_file(&mut self, snapshot: FileSnapshot) {
+        self.files.insert(snapshot.path.clone(), snapshot);
+    }
+}
+
+impl IntegrityDB {
+    pub fn new(baseline: DirectorySnapshot) -> Self {
+        Self {
+            baseline,
+            version: "1.0.0".to_string(),
+        }
+    }
+}
