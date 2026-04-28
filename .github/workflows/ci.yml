@@ -1,0 +1,49 @@
+# Fichier à placer dans : .github/workflows/ci.yml
+# Ce pipeline s'exécute à chaque push et Pull Request
+
+name: CI AuditFS
+
+on:
+  push:
+    branches:
+      - "feat/**"
+      - "develop"
+  pull_request:
+    branches:
+      - "develop"
+      - "main"
+
+jobs:
+  build-and-test:
+    name: Build, Test & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache des dépendances Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Compilation
+        run: cargo build --verbose
+
+      - name: Tests unitaires et d'intégration
+        run: cargo test --verbose
+
+      - name: Linting avec Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Vérification du format
+        run: cargo fmt --check

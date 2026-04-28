@@ -1,0 +1,54 @@
+[package]
+name = "auditfs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Équipe AuditFS TLC"]
+description = "Système de contrôle d'intégrité de fichiers"
+
+[[bin]]
+name = "auditfs"
+path = "src/main.rs"
+
+[dependencies]
+# Hashing (Partie 1)
+sha2 = "0.10"
+blake3 = "1"
+
+# HMAC pour la base d'intégrité (Partie 2)
+hmac = "0.12"
+pbkdf2 = "0.12"
+
+# Parallélisme (Partie 3)
+rayon = "1.9"
+
+# Sérialisation (Parties 2 & 4)
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+bincode = "1"
+
+# Compression (Partie 2)
+flate2 = "1"
+
+# Alertes email SMTP (Partie 5)
+lettre = "0.11"
+
+# CLI (toutes les parties)
+clap = { version = "4", features = ["derive"] }
+
+# Gestion des erreurs
+anyhow = "1"
+thiserror = "1"
+
+# Logs
+log = "0.4"
+env_logger = "0.11"
+
+# Timestamps
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tempfile = "3"
+assert_fs = "1"
+
+[profile.release]
+opt-level = 3
