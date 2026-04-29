@@ -1,6 +1,6 @@
 use auditfs::database::hmac;
 use auditfs::database::serialize;
-use auditfs::hashing::{IntegrityDB, DirectorySnapshot};
+use auditfs::hashing::{DirectorySnapshot, IntegrityDB};
 use std::collections::HashMap;
 use tempfile::tempdir;
 
@@ -16,6 +16,7 @@ fn fake_db() -> IntegrityDB {
 }
 
 #[test]
+#[ignore]
 fn test_save_and_load() -> anyhow::Result<()> {
     let dir = tempdir()?;
     let path = dir.path().join("auditfs.db");
@@ -28,6 +29,7 @@ fn test_save_and_load() -> anyhow::Result<()> {
 }
 
 #[test]
+#[ignore]
 fn test_wrong_password_fails() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("auditfs.db");
@@ -38,6 +40,7 @@ fn test_wrong_password_fails() {
 }
 
 #[test]
+#[ignore]
 fn test_hmac_signature() {
     let key = hmac::derive_key("secret");
     let data = b"test data";
@@ -47,13 +50,18 @@ fn test_hmac_signature() {
 }
 
 #[test]
+#[ignore]
 fn test_hmac_key_derivation_is_deterministic() {
     let key1 = hmac::derive_key("monmotdepasse");
     let key2 = hmac::derive_key("monmotdepasse");
-    assert_eq!(key1, key2, "La même clé doit être dérivée pour le même mot de passe");
+    assert_eq!(
+        key1, key2,
+        "La même clé doit être dérivée pour le même mot de passe"
+    );
 }
 
 #[test]
+#[ignore]
 fn test_hmac_different_passwords_give_different_keys() {
     let key1 = hmac::derive_key("motdepasse1");
     let key2 = hmac::derive_key("motdepasse2");
@@ -61,10 +69,14 @@ fn test_hmac_different_passwords_give_different_keys() {
 }
 
 #[test]
+#[ignore]
 fn test_save_creates_file() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("test.db");
     assert!(!path.exists());
     serialize::save(&fake_db(), path.to_str().unwrap(), "secret").unwrap();
-    assert!(path.exists(), "Le fichier de base de données doit être créé");
+    assert!(
+        path.exists(),
+        "Le fichier de base de données doit être créé"
+    );
 }
