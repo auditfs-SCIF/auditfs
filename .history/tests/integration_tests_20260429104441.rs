@@ -1,4 +1,4 @@
-/*use auditfs::scanner::walker;
+use auditfs::scanner::walker;
 use auditfs::database::serialize;
 use auditfs::diff::compare;
 use auditfs::hashing::IntegrityDB;

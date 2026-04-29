@@ -1,4 +1,4 @@
-/*use auditfs::scanner::walker;
+use auditfs::scanner::walker;
 use auditfs::database::serialize;
 use auditfs::diff::compare;
 use auditfs::hashing::IntegrityDB;
@@ -145,4 +145,4 @@ fn test_daemon_whitelist_filters_changes() {
     // 4. Le log doit être vide car le fichier est dans la whitelist
     let log = fs::read_to_string(&log_path).unwrap_or_default();
     assert!(log.is_empty(), "Le log doit être vide si le fichier est dans la whitelist");
-}*/
+}

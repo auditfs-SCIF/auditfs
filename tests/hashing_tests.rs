@@ -6,7 +6,6 @@ use std::io::Write;
 use tempfile::NamedTempFile;
 
 #[test]
-#[ignore]
 fn test_sha256_hash() {
     let mut f = NamedTempFile::new().unwrap();
     f.write_all(b"hello world").unwrap();
@@ -19,7 +18,6 @@ fn test_sha256_hash() {
 }
 
 #[test]
-#[ignore]
 fn test_sha256_empty_file() {
     let f = NamedTempFile::new().unwrap();
     let hash = sha256::hash_file(f.path().to_str().unwrap()).unwrap();
@@ -31,7 +29,6 @@ fn test_sha256_empty_file() {
 }
 
 #[test]
-#[ignore]
 fn test_sha256_different_contents_give_different_hashes() {
     let mut f1 = NamedTempFile::new().unwrap();
     let mut f2 = NamedTempFile::new().unwrap();
@@ -43,7 +40,6 @@ fn test_sha256_different_contents_give_different_hashes() {
 }
 
 #[test]
-#[ignore]
 fn test_blake3_hash() {
     let mut f = NamedTempFile::new().unwrap();
     f.write_all(b"hello world").unwrap();
@@ -54,7 +50,6 @@ fn test_blake3_hash() {
 }
 
 #[test]
-#[ignore]
 fn test_blake3_deterministic() {
     let mut f = NamedTempFile::new().unwrap();
     f.write_all(b"contenu stable").unwrap();
@@ -64,7 +59,6 @@ fn test_blake3_deterministic() {
 }
 
 #[test]
-#[ignore]
 fn test_blake3_different_contents_give_different_hashes() {
     let mut f1 = NamedTempFile::new().unwrap();
     let mut f2 = NamedTempFile::new().unwrap();
@@ -76,7 +70,6 @@ fn test_blake3_different_contents_give_different_hashes() {
 }
 
 #[test]
-#[ignore]
 fn test_file_snapshot_creation() {
     let snap = FileSnapshot {
         path: "/etc/passwd".to_string(),
@@ -93,7 +86,6 @@ fn test_file_snapshot_creation() {
 }
 
 #[test]
-#[ignore]
 fn test_directory_snapshot_creation() {
     let mut files = HashMap::new();
     files.insert(
