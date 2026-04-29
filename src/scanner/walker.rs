@@ -41,11 +41,8 @@ fn scan_dir(
             symlink::register_inode(&path_str, visited);
         }
         if path.is_file() {
-            match metadata::collect(&path_str) {
-                Ok(snap) => {
-                    files.insert(path_str, snap);
-                }
-                Err(_) => {} // fichier illisible → on ignore
+            if let Ok(snap) = metadata::collect(&path_str) {
+                files.insert(path_str, snap);
             }
         } else if path.is_dir() {
             scan_dir(&path_str, files, visited)?;
