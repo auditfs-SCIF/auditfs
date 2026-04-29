@@ -9,11 +9,15 @@ fn get_inode(path: &Path) -> Option<u64> {
 }
 
 #[cfg(not(unix))]
-fn get_inode(_path: &Path) -> Option<u64> { None }
+fn get_inode(_path: &Path) -> Option<u64> {
+    None
+}
 
 pub fn is_symlink_loop(path: &str, visited_inodes: &HashSet<u64>) -> bool {
     let p = Path::new(path);
-    if !p.is_symlink() { return false; }
+    if !p.is_symlink() {
+        return false;
+    }
     if let Some(inode) = get_inode(p) {
         return visited_inodes.contains(&inode);
     }
