@@ -1,7 +1,44 @@
-// Partie 3 — Gestion des symlinks (sans boucle infinie)
-// TODO: détecter et résoudre les symlinks
-// Utiliser un HashSet de inodes déjà visités
+use std::collections::HashSet;
+use std::fs;
+use std::path::Path;
 
-pub fn is_symlink_loop(_path: &str, _visited_inodes: &std::collections::HashSet<u64>) -> bool {
-    todo!("Détecter les boucles de symlinks via inodes")
+#[cfg(unix)]
+fn get_inode(path: &Path) -> Option<u64> {
+    use std::os::unix::fs::MetadataExt;
+    fs::metadata(path).ok().map(|m| m.ino())
+}
+
+#[cfg(not(unix))]
+fn get_inode(_path: &Path) -> Option<u64> {
+    None
+}
+
+pub fn is_symlink_loop(path: &str, visited_inodes: &HashSet<u64>) -> bool {
+    let p = Path::new(path);
+    if !p.is_symlink() {
+        return false;
+    }
+    if let Some(inode) = get_inode(p) {
+        return visited_inodes.contains(&inode);
+    }
+    false
+}
+
+pub fn register_inode(path: &str, visited: &mut HashSet<u64>) {
+    let p = Path::new(path);
+    if let Some(inode) = get_inode(p) {
+        visited.insert(inode);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_no_loop_normal_file() {
+        let visited = HashSet::new();
+        // Un fichier normal ne crée pas de boucle
+        assert!(!is_symlink_loop("/tmp", &visited));
+    }
 }
