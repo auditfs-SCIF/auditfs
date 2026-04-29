@@ -1,5 +1,5 @@
-use crate::database::{compress, hmac};
 use crate::hashing::IntegrityDB;
+use crate::database::{compress, hmac};
 use std::fs;
 
 pub fn save(db: &IntegrityDB, path: &str, password: &str) -> anyhow::Result<()> {

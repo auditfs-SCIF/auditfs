@@ -16,9 +16,7 @@ pub fn derive_key(password: &str) -> Vec<u8> {
         let mut mac2 = HmacSha256::new_from_slice(password.as_bytes()).expect("HMAC init");
         mac2.update(&prev);
         prev = mac2.finalize().into_bytes().to_vec();
-        for (k, p) in key.iter_mut().zip(prev.iter()) {
-            *k ^= p;
-        }
+        for (k, p) in key.iter_mut().zip(prev.iter()) { *k ^= p; }
     }
     key
 }
