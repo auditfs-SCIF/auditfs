@@ -1,6 +1,6 @@
 // Partie 4 — Planificateur (désactivé temporairement)
-use crate::daemon::whitelist::Whitelist;
 use anyhow::Result;
+use crate::daemon::whitelist::Whitelist;
 
 pub fn run_once(
     _scan_dir: &str,
