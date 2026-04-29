@@ -2,6 +2,6 @@
 // Binôme : Étudiant 9 + Étudiant 10
 // Dépend de toutes les autres parties
 
-pub mod scheduler;
 pub mod alert;
+pub mod scheduler;
 pub mod whitelist;

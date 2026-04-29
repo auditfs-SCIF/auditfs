@@ -1,6 +1,6 @@
-use sha2::{Sha256, Digest};
-use std::io::Read;
+use sha2::{Digest, Sha256};
 use std::fs::File;
+use std::io::Read;
 
 pub fn hash_file(path: &str) -> anyhow::Result<String> {
     let mut file = File::open(path)?;
@@ -9,7 +9,9 @@ pub fn hash_file(path: &str) -> anyhow::Result<String> {
 
     loop {
         let n = file.read(&mut buffer)?;
-        if n == 0 { break; }
+        if n == 0 {
+            break;
+        }
         hasher.update(&buffer[..n]);
     }
 

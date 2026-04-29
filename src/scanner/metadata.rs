@@ -1,5 +1,5 @@
 use crate::hashing::FileSnapshot;
-use crate::hashing::{sha256, blake3};
+use crate::hashing::{blake3, sha256};
 use std::fs;
 
 pub fn collect(path: &str) -> anyhow::Result<FileSnapshot> {
@@ -12,8 +12,13 @@ pub fn collect(path: &str) -> anyhow::Result<FileSnapshot> {
     #[cfg(not(unix))]
     let (permissions, owner) = (0u32, 0u32);
 
-    let modified_at = meta.modified()
-        .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs() as i64)
+    let modified_at = meta
+        .modified()
+        .map(|t| {
+            t.duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64
+        })
         .unwrap_or(0);
 
     Ok(FileSnapshot {
