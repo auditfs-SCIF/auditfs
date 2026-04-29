@@ -9,8 +9,12 @@ impl Whitelist {
 
     pub fn load(path: &str) -> anyhow::Result<Self> {
         let content = std::fs::read_to_string(path)?;
+<<<<<<< Updated upstream
         let patterns = content
             .lines()
+=======
+        let patterns = content.lines()
+>>>>>>> Stashed changes
             .map(|l| l.trim().to_string())
             .filter(|l| !l.is_empty() && !l.starts_with('#'))
             .collect();

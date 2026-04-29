@@ -1,17 +1,27 @@
-// Partie 5 — Envoi d'alertes par email (SMTP simple)
-// TODO: utiliser la crate lettre pour envoyer des emails
+use std::fs::OpenOptions;
+use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-pub struct AlertConfig {
-    pub smtp_host: String,
-    pub smtp_port: u16,
-    pub from: String,
-    pub to: String,
+pub fn log_to_file(path: &str, message: &str) -> anyhow::Result<()> {
+    let ts = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let mut file = OpenOptions::new().create(true).append(true).open(path)?;
+    writeln!(file, "[{}] {}", ts, message)?;
+    Ok(())
 }
 
-pub fn send_email(_config: &AlertConfig, _subject: &str, _body: &str) -> anyhow::Result<()> {
-    todo!("Implémenter l'envoi d'email via lettre")
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
 
-pub fn log_to_file(_path: &str, _message: &str) -> anyhow::Result<()> {
-    todo!("Implémenter l'écriture dans le fichier de log")
+    #[test]
+    fn test_log_to_file() {
+        let f = NamedTempFile::new().unwrap();
+        log_to_file(f.path().to_str().unwrap(), "test alerte").unwrap();
+        let content = std::fs::read_to_string(f.path()).unwrap();
+        assert!(content.contains("test alerte"));
+    }
 }

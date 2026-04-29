@@ -3,18 +3,8 @@ pub struct Whitelist {
 }
 
 impl Whitelist {
-    pub fn new(patterns: Vec<String>) -> Self {
-        Whitelist { patterns }
-    }
-
-    pub fn load(path: &str) -> anyhow::Result<Self> {
-        let content = std::fs::read_to_string(path)?;
-        let patterns = content
-            .lines()
-            .map(|l| l.trim().to_string())
-            .filter(|l| !l.is_empty() && !l.starts_with('#'))
-            .collect();
-        Ok(Whitelist { patterns })
+    pub fn load(_path: &str) -> anyhow::Result<Self> {
+        todo!("Charger la liste blanche depuis un fichier")
     }
 
     pub fn is_whitelisted(&self, file_path: &str) -> bool {
