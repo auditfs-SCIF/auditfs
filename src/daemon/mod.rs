@@ -1,3 +1,3 @@
-pub mod scheduler;
 pub mod alert;
+pub mod scheduler;
 pub mod whitelist;
