@@ -1,5 +1,5 @@
-pub mod hashing;
-pub mod database;
-pub mod scanner;
-pub mod diff;
 pub mod daemon;
+pub mod database;
+pub mod diff;
+pub mod hashing;
+pub mod scanner;
