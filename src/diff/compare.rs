@@ -1,228 +1,106 @@
-// Comparer deux snapshots d'intégrité et
-// produire un DiffResult décrivant ce qui a changé.
-
-
-use std::collections::HashMap;
+use crate::hashing::DirectorySnapshot;
 use serde::{Deserialize, Serialize};
 
-// Types publics
-
-/// Catégorie d'un changement détecté sur un fichier.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ChangeKind {
-    /// Le fichier n'existait pas dans l'ancien snapshot
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ChangeType {
     Added,
-    /// Le fichier n'existe plus dans le nouveau snapshot
     Removed,
-    /// Le fichier existe dans les deux snapshots mais son hash a changé
-    Modified,
+    Modified { changed_attributes: Vec<String> },
+    DangerousPermission,
 }
 
-/// Décrit un changement sur un fichier précis.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FileChange {
-    /// Chemin absolu du fichier concerné
     pub path: String,
-
-    /// Type de changement (Added / Removed / Modified)
-    pub kind: ChangeKind,
-
-    /// Hash du fichier dans l'ancien snapshot (None si le fichier était absent)
-    pub old_hash: Option<String>,
-
-    /// Hash du fichier dans le nouveau snapshot (None si le fichier a disparu)
-    pub new_hash: Option<String>,
+    pub change: ChangeType,
 }
 
-/// Résultat complet de la comparaison entre deux snapshots.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DiffResult {
-    /// Liste de tous les changements détectés (triée par chemin)
     pub changes: Vec<FileChange>,
-
-    /// Nombre total de fichiers dans l'ancien snapshot
-    pub total_old: usize,
-
-    /// Nombre total de fichiers dans le nouveau snapshot
-    pub total_new: usize,
 }
 
-impl DiffResult {
-    /// Retourne uniquement les fichiers ajoutés
-    pub fn added(&self) -> Vec<&FileChange> {
-        self.changes
-            .iter()
-            .filter(|c| c.kind == ChangeKind::Added)
-            .collect()
+pub fn compare(before: &DirectorySnapshot, after: &DirectorySnapshot) -> DiffResult {
+    let mut changes = Vec::new();
+
+    // Fichiers supprimés
+    for path in before.files.keys() {
+        if !after.files.contains_key(path) {
+            changes.push(FileChange { path: path.clone(), change: ChangeType::Removed });
+        }
     }
 
-    /// Retourne uniquement les fichiers supprimés
-    pub fn removed(&self) -> Vec<&FileChange> {
-        self.changes
-            .iter()
-            .filter(|c| c.kind == ChangeKind::Removed)
-            .collect()
+    // Fichiers ajoutés
+    for path in after.files.keys() {
+        if !before.files.contains_key(path) {
+            changes.push(FileChange { path: path.clone(), change: ChangeType::Added });
+        }
     }
 
-    /// Retourne uniquement les fichiers modifiés
-    pub fn modified(&self) -> Vec<&FileChange> {
-        self.changes
-            .iter()
-            .filter(|c| c.kind == ChangeKind::Modified)
-            .collect()
-    }
-
-    /// Retourne true si aucun changement n'a été détecté
-    pub fn is_clean(&self) -> bool {
-        self.changes.is_empty()
-    }
-
-    /// Nombre total de changements
-    pub fn count(&self) -> usize {
-        self.changes.len()
-    }
-}
-
-
-// Fonction principale de comparaison
-
-// Compare deux snapshots et retourne un DiffResult.
-pub fn compare_snapshots(
-    old: &HashMap<String, String>,
-    new: &HashMap<String, String>,
-) -> DiffResult {
-    let mut changes: Vec<FileChange> = Vec::new();
-
-    // Étape 1 : Parcourir l'ancien snapshot
-    // Pour chaque fichier connu, vérifier s'il existe encore et si son hash est identique. 
-    for (path, old_hash) in old {
-        match new.get(path) {
-            Some(new_hash) if new_hash == old_hash => {
-                // Hash identique → rien à signaler, le fichier est intact
+    // Fichiers modifiés
+    for (path, after_snap) in &after.files {
+        if let Some(before_snap) = before.files.get(path) {
+            let mut attrs = Vec::new();
+            if before_snap.sha256 != after_snap.sha256 { attrs.push("sha256".to_string()); }
+            if before_snap.size != after_snap.size { attrs.push("size".to_string()); }
+            if before_snap.permissions != after_snap.permissions { attrs.push("permissions".to_string()); }
+            if before_snap.modified_at != after_snap.modified_at { attrs.push("modified_at".to_string()); }
+            if !attrs.is_empty() {
+                changes.push(FileChange { path: path.clone(), change: ChangeType::Modified { changed_attributes: attrs } });
             }
-            Some(new_hash) => {
-                // Hash différent → le fichier a été modifié
-                changes.push(FileChange {
-                    path: path.clone(),
-                    kind: ChangeKind::Modified,
-                    old_hash: Some(old_hash.clone()),
-                    new_hash: Some(new_hash.clone()),
-                });
-            }
-            None => {
-                // Fichier absent du nouveau snapshot → supprimé
-                changes.push(FileChange {
-                    path: path.clone(),
-                    kind: ChangeKind::Removed,
-                    old_hash: Some(old_hash.clone()),
-                    new_hash: None,
-                });
+            // World-writable : permissions avec bit 002
+            if after_snap.permissions & 0o002 != 0 {
+                changes.push(FileChange { path: path.clone(), change: ChangeType::DangerousPermission });
             }
         }
     }
 
-    // Étape 2 : Parcourir le nouveau snapshot 
-    // Chercher les fichiers qui n'existaient pas dans l'ancien snapshot.
-    for (path, new_hash) in new {
-        if !old.contains_key(path) {
-            // Nouveau fichier → ajouté
-            changes.push(FileChange {
-                path: path.clone(),
-                kind: ChangeKind::Added,
-                old_hash: None,
-                new_hash: Some(new_hash.clone()),
-            });
-        }
-    }
-
-    // Étape 3 : Trier par chemin pour un affichage reproductible
-    changes.sort_by(|a, b| a.path.cmp(&b.path));
-
-    DiffResult {
-        changes,
-        total_old: old.len(),
-        total_new: new.len(),
-    }
+    DiffResult { changes }
 }
-
-
-// Tests unitaires
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::hashing::{DirectorySnapshot, FileSnapshot};
+    use std::collections::HashMap;
 
-    // Construit un HashMap<String,String> à partir de paires littérales
-    fn snapshot(pairs: &[(&str, &str)]) -> HashMap<String, String> {
-        pairs
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect()
+    fn make_snap(files: Vec<(&str, &str)>) -> DirectorySnapshot {
+        let mut map = HashMap::new();
+        for (path, hash) in files {
+            map.insert(path.to_string(), FileSnapshot {
+                path: path.to_string(),
+                size: 10,
+                sha256: hash.to_string(),
+                blake3: hash.to_string(),
+                permissions: 0o644,
+                owner: 1000,
+                modified_at: 0,
+            });
+        }
+        DirectorySnapshot { root: "/tmp".to_string(), files: map, created_at: 0 }
     }
 
     #[test]
-    fn test_aucun_changement() {
-        let old = snapshot(&[("/etc/passwd", "aaa"), ("/etc/hosts", "bbb")]);
-        let new = old.clone();
-        let result = compare_snapshots(&old, &new);
-        assert!(result.is_clean(), "Aucun changement attendu");
+    fn test_detect_added() {
+        let before = make_snap(vec![]);
+        let after = make_snap(vec![("/tmp/new.txt", "abc123")]);
+        let diff = compare(&before, &after);
+        assert!(diff.changes.iter().any(|c| matches!(c.change, ChangeType::Added)));
     }
 
     #[test]
-    fn test_fichier_ajoute() {
-        let old = snapshot(&[("/etc/passwd", "aaa")]);
-        let new = snapshot(&[("/etc/passwd", "aaa"), ("/etc/shadow", "ccc")]);
-        let result = compare_snapshots(&old, &new);
-        assert_eq!(result.added().len(), 1);
-        assert_eq!(result.added()[0].path, "/etc/shadow");
+    fn test_detect_removed() {
+        let before = make_snap(vec![("/tmp/old.txt", "abc123")]);
+        let after = make_snap(vec![]);
+        let diff = compare(&before, &after);
+        assert!(diff.changes.iter().any(|c| matches!(c.change, ChangeType::Removed)));
     }
 
     #[test]
-    fn test_fichier_supprime() {
-        let old = snapshot(&[("/etc/passwd", "aaa"), ("/etc/cron", "bbb")]);
-        let new = snapshot(&[("/etc/passwd", "aaa")]);
-        let result = compare_snapshots(&old, &new);
-        assert_eq!(result.removed().len(), 1);
-        assert_eq!(result.removed()[0].path, "/etc/cron");
-    }
-
-    #[test]
-    fn test_fichier_modifie() {
-        let old = snapshot(&[("/etc/passwd", "aaa")]);
-        let new = snapshot(&[("/etc/passwd", "zzz")]); // hash différent
-        let result = compare_snapshots(&old, &new);
-        assert_eq!(result.modified().len(), 1);
-        let change = &result.modified()[0];
-        assert_eq!(change.old_hash, Some("aaa".to_string()));
-        assert_eq!(change.new_hash, Some("zzz".to_string()));
-    }
-
-    #[test]
-    fn test_changements_multiples() {
-        let old = snapshot(&[
-            ("/a", "hash_a"),
-            ("/b", "hash_b"), // sera supprimé
-            ("/c", "hash_c"), // sera modifié
-        ]);
-        let new = snapshot(&[
-            ("/a", "hash_a"),             // inchangé
-            ("/c", "hash_c_modifie"),     // modifié
-            ("/d", "hash_d"),             // ajouté
-        ]);
-        let result = compare_snapshots(&old, &new);
-        assert_eq!(result.added().len(), 1);
-        assert_eq!(result.removed().len(), 1);
-        assert_eq!(result.modified().len(), 1);
-        assert_eq!(result.count(), 3);
-    }
-
-    #[test]
-    fn test_tri_par_chemin() {
-        let old = snapshot(&[("/z", "1"), ("/a", "2")]);
-        let new: HashMap<String, String> = HashMap::new();
-        let result = compare_snapshots(&old, &new);
-        // Les suppressions doivent être triées alphabétiquement
-        assert_eq!(result.changes[0].path, "/a");
-        assert_eq!(result.changes[1].path, "/z");
+    fn test_detect_modified() {
+        let before = make_snap(vec![("/tmp/f.txt", "hash1")]);
+        let after = make_snap(vec![("/tmp/f.txt", "hash2")]);
+        let diff = compare(&before, &after);
+        assert!(diff.changes.iter().any(|c| matches!(c.change, ChangeType::Modified { .. })));
     }
 }
