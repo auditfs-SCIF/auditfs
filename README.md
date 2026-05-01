@@ -370,4 +370,4 @@ auditfs/
 
 ---
 
-*Projet réalisé dans le cadre du cours TLC — Année universitaire 2025–2026*
+*Projet réalisé dans le cadre du cours de Programmation Systeme — Année universitaire 2025–2026*
