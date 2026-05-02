@@ -9,10 +9,11 @@
 1. [Présentation](#présentation)
 2. [Prérequis](#prérequis)
 3. [Installation et compilation](#installation-et-compilation)
-4. [Utilisation — commandes](#utilisation)
-5. [Résultats des tests](#résultats-des-tests)
-6. [Architecture](#architecture)
-7. [Dépendances](#dépendances)
+4. [Exécution](#exécution)
+5. [Utilisation — commandes](#utilisation)
+6. [Résultats des tests](#résultats-des-tests)
+7. [Architecture](#architecture)
+8. [Dépendances](#dépendances)
 
 ---
 
@@ -74,12 +75,43 @@ Le binaire produit est :
 
 ---
 
+## Exécution
+
+Une fois compilé, vous pouvez lancer AuditFS de deux manières :
+
+### 1. Directement avec le chemin vers le binaire (recommandé)
+
+```powershell
+# Windows (PowerShell)
+.\target\debug\auditfs.exe scan ./src baseline.db secret
+.\target\release\auditfs.exe diff baseline.db secret json
+```
+
+```bash
+# Linux / macOS
+./target/debug/auditfs scan ./src baseline.db secret
+```
+
+### 2. Avec `cargo run` (utile en développement)
+
+Cargo compile puis exécute automatiquement. Les arguments après `--` sont passés au programme.
+
+```bash
+cargo run -- scan ./src baseline.db secret
+cargo run -- diff baseline.db secret html
+cargo run -- daemon ./src baseline.db secret audit.log 300
+```
+
+> **Important :** N'utilisez pas `auditfs` seul sans chemin ; cette commande ne fonctionne que si le binaire est dans votre `PATH`. Pour plus de commodité, vous pouvez installer le binaire globalement avec `cargo install --path .` (l'ajoute à `~/.cargo/bin`).
+
+---
+
 ## Utilisation
 
 ### Aide
 
-```
-auditfs.exe
+```powershell
+.\target\debug\auditfs.exe
 ```
 Sortie :
 ```
@@ -99,10 +131,12 @@ USAGE:
 # Syntaxe
 auditfs scan <dossier> <baseline.db> <motdepasse>
 
-# Exemples
-auditfs scan ./src              baseline.db        secret
-auditfs scan C:\inetpub\wwwroot site_baseline.db   MonMotDePasse123
-auditfs scan /var/www           /srv/audit/web.db  $AUDIT_PWD
+# Exemples (Windows PowerShell)
+.\target\debug\auditfs.exe scan ./src              baseline.db        secret
+.\target\debug\auditfs.exe scan C:\inetpub\wwwroot site_baseline.db   MonMotDePasse123
+
+# Exemples (Linux/macOS)
+./target/debug/auditfs scan /var/www /srv/audit/web.db $AUDIT_PWD
 ```
 
 **Sortie attendue :**
@@ -129,13 +163,13 @@ Baseline sauvegardée dans baseline.db
 auditfs diff <baseline.db> <motdepasse> [text|json|html]
 
 # Rapport texte (défaut)
-auditfs diff baseline.db secret
+.\target\debug\auditfs.exe diff baseline.db secret
 
 # Rapport JSON
-auditfs diff baseline.db secret json
+.\target\debug\auditfs.exe diff baseline.db secret json
 
 # Rapport HTML (rediriger vers un fichier)
-auditfs diff baseline.db secret html > rapport.html
+.\target\debug\auditfs.exe diff baseline.db secret html > rapport.html
 ```
 
 **Exemple de sortie texte :**
@@ -172,10 +206,10 @@ Error: Signature invalide — fichier falsifié ou mot de passe incorrect
 auditfs daemon <dossier> <baseline.db> <motdepasse> <log.txt> [intervalle_sec]
 
 # Scan toutes les 60 secondes (défaut)
-auditfs daemon ./src baseline.db secret audit.log
+.\target\debug\auditfs.exe daemon ./src baseline.db secret audit.log
 
 # Scan toutes les 5 minutes
-auditfs daemon ./src baseline.db secret audit.log 300
+.\target\debug\auditfs.exe daemon ./src baseline.db secret audit.log 300
 
 # Arrêt : Ctrl+C
 ```
