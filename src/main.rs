@@ -13,7 +13,7 @@ fn usage() {
     println!("USAGE:");
     println!("  auditfs scan   <dossier> <baseline.db> <motdepasse>");
     println!("  auditfs diff   <baseline.db> <motdepasse> [text|json|html]");
-    println!("  auditfs daemon <dossier> <baseline.db> <motdepasse> <log.txt>");
+    println!("  auditfs daemon <dossier> <baseline.db> <motdepasse> <log.txt> [intervalle_sec]");
 }
 
 fn main() -> anyhow::Result<()> {
@@ -76,10 +76,14 @@ fn main() -> anyhow::Result<()> {
                 60
             };
             let wl = daemon::whitelist::Whitelist::new(vec![]);
-            println!("Daemon démarré (interval={}s)", interval);
+            println!(
+                "Daemon démarré (interval={}s) — Ctrl+C pour arrêter",
+                interval
+            );
             loop {
                 daemon::scheduler::run_once(&args[2], &args[3], &args[4], &args[5], &wl)?;
                 println!("Scan effectué, prochain dans {} secondes...", interval);
+                // Correction : utilise la variable interval, pas 120 en dur
                 std::thread::sleep(std::time::Duration::from_secs(interval));
             }
         }

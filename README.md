@@ -97,7 +97,7 @@ Une fois compilé, vous pouvez lancer AuditFS de deux manières :
 Cargo compile puis exécute automatiquement. Les arguments après `--` sont passés au programme.
 
 ```bash
-cargo run -- scan ./src baseline.db secret
+cargo run -- scan ./src baseline.db secret    
 cargo run -- diff baseline.db secret html
 cargo run -- daemon ./src baseline.db secret audit.log 300
 ```
